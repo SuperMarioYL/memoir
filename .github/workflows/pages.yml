@@ -1,0 +1,18 @@
+name: pages
+on:
+  push:
+    branches: [main]
+    paths: ['web/**', '.github/workflows/pages.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  site:
+    uses: SuperMarioYL/web-factory/.github/workflows/build-site.yml@70fdbbde77828281378a75bb8445802743b7726a
+    with:
+      factory_ref: 70fdbbde77828281378a75bb8445802743b7726a
