@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="240" viewBox="0 0 900 240" role="img" aria-label="Memoir architecture: notes folder to cache-stable prefix to DeepSeek prefix-cache discount">
+  <rect width="900" height="240" fill="#0b1120"/>
+  <g font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif" text-rendering="geometricPrecision">
+    <text x="450" y="34" text-anchor="middle" font-size="17" font-weight="700" fill="#e2e8f0">Memoir — whole-life memory on DeepSeek prefix-cache</text>
+    <rect x="36" y="84" width="200" height="92" rx="12" fill="#111827" stroke="#475569" stroke-width="1.5"/>
+    <text x="136" y="118" text-anchor="middle" font-size="14" font-weight="600" fill="#e2e8f0">Your notes</text>
+    <text x="136" y="140" text-anchor="middle" font-size="11" fill="#94a3b8">.md / .txt folder</text>
+    <text x="136" y="158" text-anchor="middle" font-size="11" fill="#94a3b8">journals, decisions, lists</text>
+    <line x1="240" y1="130" x2="300" y2="130" stroke="#64748b" stroke-width="1.6"/>
+    <polygon points="300,130 292,125 292,135" fill="#64748b"/>
+    <text x="270" y="120" text-anchor="middle" font-size="10" fill="#94a3b8">ingest</text>
+    <rect x="304" y="84" width="252" height="92" rx="12" fill="#1e1b4b" stroke="#818cf8" stroke-width="1.6"/>
+    <text x="430" y="112" text-anchor="middle" font-size="14" font-weight="600" fill="#e0e7ff">Memoir CLI</text>
+    <text x="430" y="132" text-anchor="middle" font-size="11" fill="#c7d2fe">deterministic ordering</text>
+    <text x="430" y="148" text-anchor="middle" font-size="11" fill="#c7d2fe">→ cache-stable prefix</text>
+    <text x="430" y="164" text-anchor="middle" font-size="10" fill="#a5b4fc">byte-identical across sessions</text>
+    <line x1="560" y1="130" x2="620" y2="130" stroke="#64748b" stroke-width="1.6"/>
+    <polygon points="620,130 612,125 612,135" fill="#64748b"/>
+    <text x="590" y="120" text-anchor="middle" font-size="10" fill="#94a3b8">re-send</text>
+    <rect x="624" y="84" width="240" height="92" rx="12" fill="#052e1f" stroke="#34d399" stroke-width="1.6"/>
+    <text x="744" y="112" text-anchor="middle" font-size="14" font-weight="600" fill="#a7f3d0">DeepSeek prefix-cache</text>
+    <text x="744" y="132" text-anchor="middle" font-size="11" fill="#6ee7b7">repeated prefix tokens</text>
+    <text x="744" y="148" text-anchor="middle" font-size="11" fill="#6ee7b7">billed at the cache rate</text>
+    <text x="744" y="164" text-anchor="middle" font-size="10" fill="#34d399">$0.07/M vs $0.27/M miss</text>
+    <text x="450" y="214" text-anchor="middle" font-size="11" fill="#94a3b8">Full personal history re-sent every turn — affordable only where a prefix-cache discount exists.</text>
+  </g>
+</svg>
