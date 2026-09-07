@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="260" viewBox="0 0 900 260" role="img" aria-label="Ingest: 4 notes assembled into a cache-stable prefix of 346 tokens">
+  <rect width="900" height="260" fill="#ffffff"/>
+  <g font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif" text-rendering="geometricPrecision">
+    <text x="450" y="32" text-anchor="middle" font-size="16" font-weight="700" fill="#0f172a">memoir ingest examples/notes</text>
+    <!-- 4 note chips -->
+    <rect x="36" y="64" width="206" height="32" rx="6" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.2"/>
+    <text x="50" y="84" font-size="12" fill="#0f172a">2024-goals.md</text>
+    <text x="214" y="84" text-anchor="end" font-size="11" fill="#475569">44 tok</text>
+    <rect x="36" y="100" width="206" height="32" rx="6" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.2"/>
+    <text x="50" y="120" font-size="12" fill="#0f172a">decision-deepseek.md</text>
+    <text x="214" y="120" text-anchor="end" font-size="11" fill="#475569">118 tok</text>
+    <rect x="36" y="136" width="206" height="32" rx="6" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.2"/>
+    <text x="50" y="156" font-size="12" fill="#0f172a">reading-list.md</text>
+    <text x="214" y="156" text-anchor="end" font-size="11" fill="#475569">72 tok</text>
+    <rect x="36" y="172" width="206" height="32" rx="6" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.2"/>
+    <text x="50" y="192" font-size="12" fill="#0f172a">training.txt</text>
+    <text x="214" y="192" text-anchor="end" font-size="11" fill="#475569">82 tok</text>
+    <!-- arrow -->
+    <line x1="246" y1="134" x2="330" y2="134" stroke="#3a5fcc" stroke-width="1.8"/>
+    <polygon points="330,134 321,128 321,140" fill="#3a5fcc"/>
+    <text x="288" y="124" text-anchor="middle" font-size="11" fill="#3a5fcc">ingest</text>
+    <!-- prefix box -->
+    <rect x="334" y="76" width="312" height="116" rx="12" fill="#eef2ff" stroke="#3a5fcc" stroke-width="1.6"/>
+    <text x="490" y="104" text-anchor="middle" font-size="14" font-weight="600" fill="#1e293b">cache-stable prefix</text>
+    <text x="490" y="126" text-anchor="middle" font-size="12" fill="#334155">tokens=346  sources=4</text>
+    <text x="490" y="146" text-anchor="middle" font-size="12" fill="#334155">hash=7dfc31cffa444112</text>
+    <text x="490" y="170" text-anchor="middle" font-size="12" font-weight="600" fill="#3a5fcc">cache_stable=True</text>
+    <!-- note -->
+    <text x="450" y="232" text-anchor="middle" font-size="11" fill="#64748b">Re-running ingest reproduces a byte-identical prefix (shasum verified).</text>
+  </g>
+</svg>

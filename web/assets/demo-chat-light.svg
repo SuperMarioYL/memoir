@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="260" viewBox="0 0 900 260" role="img" aria-label="Chat: prefix plus question to answer, with per-turn cost line">
+  <rect width="900" height="260" fill="#ffffff"/>
+  <g font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif" text-rendering="geometricPrecision">
+    <text x="450" y="32" text-anchor="middle" font-size="16" font-weight="700" fill="#0f172a">memoir chat — whole-context recall</text>
+    <!-- prefix chip -->
+    <rect x="36" y="52" width="828" height="30" rx="6" fill="#eef2ff" stroke="#3a5fcc" stroke-width="1.2"/>
+    <text x="50" y="72" font-size="12" fill="#1e293b">prefix: 346 tokens, your full personal history, re-sent every turn</text>
+    <!-- you question -->
+    <rect x="36" y="100" width="500" height="30" rx="6" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1"/>
+    <text x="50" y="120" font-size="12" fill="#0f172a">you&gt; Which books changed how I work, and what pace to break 2:00?</text>
+    <!-- memoir answer -->
+    <rect x="36" y="142" width="828" height="48" rx="6" fill="#ecfdf5" stroke="#10b981" stroke-width="1.2"/>
+    <text x="50" y="162" font-size="12" fill="#064e3b">memoir&gt; The Mom Test changed how you interview users.</text>
+    <text x="50" y="180" font-size="12" fill="#064e3b">You need 5:40/km for 21k to break 2:00; you're at 5:45/km now.</text>
+    <!-- cost line -->
+    <text x="450" y="218" text-anchor="middle" font-size="12" font-weight="600" fill="#10b981">DeepSeek prefix-cache: $0.0004/turn</text>
+    <text x="450" y="238" text-anchor="middle" font-size="12" fill="#64748b">OpenAI equivalent: $0.0039/turn</text>
+  </g>
+</svg>

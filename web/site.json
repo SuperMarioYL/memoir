@@ -87,6 +87,8 @@
           "en": "Point Memoir at any folder of .md/.txt notes. It assembles a cache-stable prefix and writes the manifest.",
           "zh": "把 Memoir 指向任意 .md/.txt 笔记文件夹，它会拼装缓存稳定的前缀并写出 manifest。"
         },
+        "image": "/assets/demo-ingest-light.svg",
+        "imageDark": "/assets/demo-ingest-dark.svg",
         "command": "memoir ingest examples/notes",
         "output": "             Ingested 4 note(s)\n┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━┓\n┃ Source               ┃ Kind     ┃ Tokens ┃\n┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━┩\n│ 2024-goals.md        │ markdown │     44 │\n│ decision-deepseek.md │ markdown │    118 │\n│ reading-list.md      │ markdown │     72 │\n│ training.txt         │ text     │     82 │\n└──────────────────────┴──────────┴────────┘\n\nPrefix assembled. tokens=346  sources=4  hash=7dfc31cffa444112  cache_stable=True"
       },
@@ -99,6 +101,8 @@
           "en": "See the per-turn dollar comparison for your actual prefix. DeepSeek steady-state is about 11x cheaper than gpt-4o without caching.",
           "zh": "查看你实际前缀的每轮费用对比。DeepSeek 稳态比 gpt-4o 不开缓存便宜约 11 倍。"
         },
+        "image": "/assets/demo-cost-light.svg",
+        "imageDark": "/assets/demo-cost-dark.svg",
         "command": "memoir cost",
         "output": "         Per-turn cost — prefix 346 tokens, ~300 output tokens\n┏━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓\n┃ Provider      ┃ Assumption                               ┃ Per turn ┃\n┡━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩\n│ DeepSeek      │ cache hit (steady state) — deepseek-chat │  $0.0004 │\n│ DeepSeek      │ cache miss (first turn)                  │  $0.0004 │\n│ OpenAI gpt-4o │ no prompt caching                        │  $0.0039 │\n│ OpenAI gpt-4o │ with prompt caching (~50% off cached)    │  $0.0034 │\n└───────────────┴──────────────────────────────────────────┴──────────┘\nSavings: OpenAI no-cache minus DeepSeek steady-state = $0.0035/turn (11x cheaper on DeepSeek)"
       },
@@ -111,6 +115,8 @@
           "en": "Chat with an AI that has read everything you've written. Each turn prints the real DeepSeek prefix-cache cost vs the OpenAI equivalent.",
           "zh": "与一个读过你全部笔记的 AI 对话。每轮打印真实的 DeepSeek 前缀缓存费用与 OpenAI 等价成本。"
         },
+        "image": "/assets/demo-chat-light.svg",
+        "imageDark": "/assets/demo-chat-dark.svg",
         "command": "export DEEPSEEK_API_KEY=sk-...\nmemoir chat",
         "output": "Memoir chat — model deepseek-chat, prefix loaded. Type your question; Ctrl-D or 'exit' to quit.\n\nyou> Which books changed how I work, and what pace do I need to break 2:00?\nmemoir> The Mom Test changed how you interview users. You need 5:40/km for 21k to break 2:00; you're at 5:45/km now.\nDeepSeek prefix-cache: $0.0004/turn  OpenAI equivalent: $0.0039/turn"
       }

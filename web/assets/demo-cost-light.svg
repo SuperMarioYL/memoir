@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="260" viewBox="0 0 900 260" role="img" aria-label="Per-turn cost: DeepSeek ~0.0004 vs OpenAI gpt-4o ~0.0039, about 11x cheaper">
+  <rect width="900" height="260" fill="#ffffff"/>
+  <g font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif" text-rendering="geometricPrecision">
+    <text x="450" y="32" text-anchor="middle" font-size="16" font-weight="700" fill="#0f172a">memoir cost — per-turn, 346-token prefix</text>
+    <!-- axis baseline -->
+    <line x1="240" y1="200" x2="860" y2="200" stroke="#cbd5e1" stroke-width="1.2"/>
+    <!-- DeepSeek cache hit: 0.0004 -->
+    <text x="232" y="78" text-anchor="end" font-size="12" fill="#0f172a">DeepSeek · cache hit</text>
+    <rect x="240" y="64" width="64" height="26" rx="4" fill="#10b981"/>
+    <text x="312" y="82" font-size="12" font-weight="600" fill="#065f46">$0.0004</text>
+    <!-- DeepSeek cache miss: 0.0004 -->
+    <text x="232" y="116" text-anchor="end" font-size="12" fill="#0f172a">DeepSeek · cache miss</text>
+    <rect x="240" y="102" width="64" height="26" rx="4" fill="#6ee7b7"/>
+    <text x="312" y="120" font-size="12" font-weight="600" fill="#065f46">$0.0004</text>
+    <!-- OpenAI no cache: 0.0039 -->
+    <text x="232" y="154" text-anchor="end" font-size="12" fill="#0f172a">OpenAI gpt-4o · no cache</text>
+    <rect x="240" y="140" width="620" height="26" rx="4" fill="#f59e0b"/>
+    <text x="868" y="158" font-size="12" font-weight="600" fill="#92400e">$0.0039</text>
+    <!-- OpenAI with caching: 0.0034 -->
+    <text x="232" y="192" text-anchor="end" font-size="12" fill="#0f172a">OpenAI gpt-4o · prompt cache</text>
+    <rect x="240" y="178" width="540" height="26" rx="4" fill="#fcd34d"/>
+    <text x="788" y="196" font-size="12" font-weight="600" fill="#92400e">$0.0034</text>
+    <!-- footer -->
+    <text x="450" y="236" text-anchor="middle" font-size="12" font-weight="600" fill="#3a5fcc">Savings: $0.0035/turn — about 11x cheaper on DeepSeek</text>
+  </g>
+</svg>
