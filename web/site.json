@@ -1,135 +1,89 @@
 {
-  "schema": 2,
-  "name": "Memoir",
+  "schema": 3,
+  "name": "memoir",
   "github": "https://github.com/SuperMarioYL/memoir",
   "host": "memoir.lei6393.com",
+  "palette": "auto",
   "lang": {
     "primary": "en",
     "toggle": true
   },
-  "accent": [
-    "#3a5fcc"
-  ],
+  "meta": {
+    "visual_style": "neon-particle",
+    "demo_source": "docs/demo-results.json"
+  },
   "hero": {
     "headline": {
-      "en": "An AI that remembers your whole life — cents per turn, not dollars.",
-      "zh": "一个记得你一生的 AI —— 每轮几分钱，而不是几美元。"
+      "en": "Give your notes a stable place in every conversation.",
+      "zh": "让笔记以稳定前缀进入每次对话。"
     },
     "sub": {
-      "en": "Memoir assembles your notes into a cache-stable personal-history prefix and re-sends it to DeepSeek every turn. The prefix-cache discount makes whole-life recall affordable — no summarization, no RAG, your full history on every turn.",
-      "zh": "Memoir 把你的笔记拼装成缓存稳定的个人历史前缀，每轮重新发给 DeepSeek。前缀缓存折扣让“全量记忆”负担得起——不做摘要、不用 RAG，每轮都发完整历史。"
+      "en": "Memoir reads local text notes, assembles a deterministic prefix, and can send that prefix with conversation turns to a configured DeepSeek-compatible endpoint.",
+      "zh": "Memoir 读取本地文本笔记并生成确定性前缀，也可将该前缀与对话轮次发送给配置的 DeepSeek 兼容端点。"
     },
-    "cta": {
-      "en": "View on GitHub",
-      "zh": "在 GitHub 查看"
-    },
-    "href": "https://github.com/SuperMarioYL/memoir"
+    "href": "#quickstart"
   },
   "advantages": [
     {
       "title": {
-        "en": "Full context, every turn",
-        "zh": "每轮全量上下文"
+        "en": "Inspect all source notes",
+        "zh": "检查全部来源"
       },
       "body": {
-        "en": "Not RAG and not summarization. Memoir re-sends your complete personal history on every turn, so cross-note patterns survive. ChatGPT Memory retrieves fragments; you get the whole record, verbatim.",
-        "zh": "不是 RAG，也不是摘要。Memoir 每轮都把你的完整个人历史重新发出，跨笔记的综合判断不会丢。ChatGPT Memory 只检索片段；你拿到的是整份记录，原文照发。"
+        "en": "The manifest records the assembled sources.",
+        "zh": "清单记录实际拼接的来源。"
       }
     },
     {
       "title": {
-        "en": "A cache-stable prefix",
-        "zh": "缓存稳定的前缀"
+        "en": "Deterministic prefix",
+        "zh": "确定性前缀"
       },
       "body": {
-        "en": "Sources are sorted by path then content hash, so the assembled prefix is byte-identical across sessions and machines. cache_stable=True verifies re-assembly reproduces the same bytes — the property that triggers DeepSeek's prefix-cache discount.",
-        "zh": "按路径与内容哈希排序，拼出的前缀跨会话、跨机器逐字节一致。cache_stable=True 校验重新拼装得到相同字节——这正是触发 DeepSeek 前缀缓存折扣的性质。"
+        "en": "Input traversal order does not change assembled bytes.",
+        "zh": "遍历顺序不改变拼接字节。"
       }
     },
     {
       "title": {
-        "en": "About 11x cheaper than gpt-4o",
-        "zh": "比 gpt-4o 便宜约 11 倍"
+        "en": "Local preparation",
+        "zh": "本地准备"
       },
       "body": {
-        "en": "On the demo prefix (346 tokens, ~300 output), DeepSeek steady-state costs ~$0.0004/turn vs ~$0.0039/turn on gpt-4o without caching — about 11x cheaper. A 20k-token lifelong prefix runs roughly $0.35/month at 200 turns.",
-        "zh": "在演示前缀（346 token、约 300 输出）上，DeepSeek 稳态约 $0.0004/轮，而 gpt-4o 不开缓存约 $0.0039/轮——便宜约 11 倍。2 万 token 的一生体量前缀，每月 200 轮约 $0.35/月。"
-      }
-    },
-    {
-      "title": {
-        "en": "Local prefix, your own key",
-        "zh": "本地前缀，你的 key"
-      },
-      "body": {
-        "en": "The prefix is assembled on your machine and sent to DeepSeek with your own API key. Notes leave your device for inference only, not for storage. State lives under ~/.memoir/.",
-        "zh": "前缀在你本机拼装，用你自己的 API key 发给 DeepSeek。笔记只为推理发出，不存储。状态文件位于 ~/.memoir/。"
+        "en": "Ingestion and prefix assembly need no chat request.",
+        "zh": "导入与前缀拼接无需聊天请求。"
       }
     }
   ],
   "demo": {
     "title": {
-      "en": "From notes to whole-life memory",
-      "zh": "从笔记到一生记忆"
+      "en": "Run it on a complete example",
+      "zh": "运行完整示例"
     },
     "note": {
-      "en": "Real CLI output from examples/notes (4 small notes). ingest and cost run fully offline; chat needs a DeepSeek API key. Reproduce with the Quickstart below.",
-      "zh": "examples/notes（4 篇小笔记）的真实 CLI 输出。ingest 与 cost 完全离线运行；chat 需要 DeepSeek API key。按下方快速开始复现。"
+      "en": "Assemble only the four shipped example notes, reverse their input order and compare the resulting prefix bytes.",
+      "zh": "仅拼接随仓四份示例笔记，反转输入顺序后比较生成的前缀字节。"
     },
     "source": "https://github.com/SuperMarioYL/memoir/blob/main/docs/demo-results.json",
     "steps": [
       {
-        "label": {
-          "en": "Ingest",
-          "zh": "摄入"
-        },
-        "body": {
-          "en": "Point Memoir at any folder of .md/.txt notes. It assembles a cache-stable prefix and writes the manifest.",
-          "zh": "把 Memoir 指向任意 .md/.txt 笔记文件夹，它会拼装缓存稳定的前缀并写出 manifest。"
-        },
-        "image": "/assets/demo-ingest-light.svg",
-        "imageDark": "/assets/demo-ingest-dark.svg",
-        "command": "memoir ingest examples/notes",
-        "output": "             Ingested 4 note(s)\n┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━┓\n┃ Source               ┃ Kind     ┃ Tokens ┃\n┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━┩\n│ 2024-goals.md        │ markdown │     44 │\n│ decision-deepseek.md │ markdown │    118 │\n│ reading-list.md      │ markdown │     72 │\n│ training.txt         │ text     │     82 │\n└──────────────────────┴──────────┴────────┘\n\nPrefix assembled. tokens=346  sources=4  hash=7dfc31cffa444112  cache_stable=True"
-      },
-      {
-        "label": {
-          "en": "Cost",
-          "zh": "费用"
-        },
-        "body": {
-          "en": "See the per-turn dollar comparison for your actual prefix. DeepSeek steady-state is about 11x cheaper than gpt-4o without caching.",
-          "zh": "查看你实际前缀的每轮费用对比。DeepSeek 稳态比 gpt-4o 不开缓存便宜约 11 倍。"
-        },
-        "image": "/assets/demo-cost-light.svg",
-        "imageDark": "/assets/demo-cost-dark.svg",
-        "command": "memoir cost",
-        "output": "         Per-turn cost — prefix 346 tokens, ~300 output tokens\n┏━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓\n┃ Provider      ┃ Assumption                               ┃ Per turn ┃\n┡━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩\n│ DeepSeek      │ cache hit (steady state) — deepseek-chat │  $0.0004 │\n│ DeepSeek      │ cache miss (first turn)                  │  $0.0004 │\n│ OpenAI gpt-4o │ no prompt caching                        │  $0.0039 │\n│ OpenAI gpt-4o │ with prompt caching (~50% off cached)    │  $0.0034 │\n└───────────────┴──────────────────────────────────────────┴──────────┘\nSavings: OpenAI no-cache minus DeepSeek steady-state = $0.0035/turn (11x cheaper on DeepSeek)"
-      },
-      {
-        "label": {
-          "en": "Chat",
-          "zh": "对话"
-        },
-        "body": {
-          "en": "Chat with an AI that has read everything you've written. Each turn prints the real DeepSeek prefix-cache cost vs the OpenAI equivalent.",
-          "zh": "与一个读过你全部笔记的 AI 对话。每轮打印真实的 DeepSeek 前缀缓存费用与 OpenAI 等价成本。"
-        },
-        "image": "/assets/demo-chat-light.svg",
-        "imageDark": "/assets/demo-chat-dark.svg",
-        "command": "export DEEPSEEK_API_KEY=sk-...\nmemoir chat",
-        "output": "Memoir chat — model deepseek-chat, prefix loaded. Type your question; Ctrl-D or 'exit' to quit.\n\nyou> Which books changed how I work, and what pace do I need to break 2:00?\nmemoir> The Mom Test changed how you interview users. You need 5:40/km for 21k to break 2:00; you're at 5:45/km now.\nDeepSeek prefix-cache: $0.0004/turn  OpenAI equivalent: $0.0039/turn"
+        "label": "Recorded run",
+        "body": "Assemble the shipped example notes twice in reversed input order and compare bytes. No chat call, provider cache hit, billing or memory recall is measured.",
+        "command": ".venv/bin/python examples/presentation-demo.py",
+        "output": "{\n  \"sources\": 4,\n  \"ordered_paths\": [\n    \"2024-goals.md\",\n    \"decision-deepseek.md\",\n    \"reading-list.md\",\n    \"training.txt\"\n  ],\n  \"prefix_hash\": \"7dfc31cffa444112\",\n  \"same_bytes_after_input_reversal\": true,\n  \"cache_stable\": true\n}",
+        "image": "/assets/presentation/demo-0-light.svg",
+        "imageDark": "/assets/presentation/demo-0-dark.svg"
       }
     ]
   },
   "quickstart": {
     "title": {
-      "en": "Run it locally.",
-      "zh": "在本地跑一遍。"
+      "en": "Try it locally",
+      "zh": "本地上手"
     },
     "body": {
-      "en": "Requires Python 3.12+. ingest and cost run fully offline; chat needs a DeepSeek API key from platform.deepseek.com. State lives under ~/.memoir/.",
-      "zh": "需要 Python 3.12+。ingest 与 cost 完全离线运行；chat 需要从 platform.deepseek.com 获取 DeepSeek API key。状态文件位于 ~/.memoir/。"
+      "en": "Assemble only the four shipped example notes, reverse their input order and compare the resulting prefix bytes.",
+      "zh": "仅拼接随仓四份示例笔记，反转输入顺序后比较生成的前缀字节。"
     },
     "steps": [
       {
@@ -137,61 +91,125 @@
           "en": "Install from source",
           "zh": "从源码安装"
         },
-        "code": "git clone https://github.com/SuperMarioYL/memoir.git\ncd memoir\nuv pip install -e .   # or: pip install -e ."
+        "code": "git clone https://github.com/SuperMarioYL/memoir.git\ncd memoir\nuv venv .venv\nuv pip install --python .venv/bin/python -e .\nsource .venv/bin/activate"
       },
       {
         "title": {
-          "en": "Set your API key",
-          "zh": "设置 API key"
+          "en": "Run the included example",
+          "zh": "运行随仓示例"
         },
-        "code": "export DEEPSEEK_API_KEY=sk-..."
-      },
-      {
-        "title": {
-          "en": "Ingest your notes",
-          "zh": "摄入笔记"
-        },
-        "code": "memoir ingest ~/Notes\nmemoir cost"
-      },
-      {
-        "title": {
-          "en": "Chat with your full history",
-          "zh": "与你的完整历史对话"
-        },
-        "code": "memoir chat"
+        "code": ".venv/bin/python examples/presentation-demo.py"
       }
     ]
   },
   "limitations": [
     {
-      "en": "CLI only for v0.1 — no web or desktop GUI yet.",
-      "zh": "v0.1 仅 CLI——尚无网页或桌面 GUI。"
+      "en": "Stable bytes do not guarantee a provider cache hit or a particular cost. The demo makes no API call.",
+      "zh": "字节稳定不保证提供方缓存命中或具体费用；示例不调用 API。"
     },
     {
-      "en": "DeepSeek only — no multi-model support yet.",
-      "zh": "仅支持 DeepSeek——尚无多模型支持。"
+      "en": "Online chat sends the full ingested note content to the configured endpoint. Review the source folder before using chat.",
+      "zh": "在线 chat 会把已导入的完整笔记内容发送给配置端点，使用前应检查来源目录。"
     },
     {
-      "en": "Local folder only — no Notion or Apple Notes API auto-sync.",
-      "zh": "仅本地文件夹——不做 Notion 或 Apple Notes API 自动同步。"
-    },
-    {
-      "en": "No encryption at rest — notes leave your machine for inference only, not for storage. Encryption is planned for v0.2.",
-      "zh": "无落盘加密——笔记只为推理发出，不存储。落盘加密计划在 v0.2。"
-    },
-    {
-      "en": "chat needs a live DEEPSEEK_API_KEY; ingest, cost, and status run fully offline.",
-      "zh": "chat 需要真实的 DEEPSEEK_API_KEY；ingest、cost、status 完全离线运行。"
+      "en": "Token counts are estimates and full-prefix chat remains bounded by the selected model context window.",
+      "zh": "token 数是估计值，完整前缀聊天仍受所选模型上下文窗口限制。"
     }
   ],
-  "footer": {
-    "tag": {
-      "en": "MIT · Python 3.12+ · Runs locally",
-      "zh": "MIT · Python 3.12+ · 本地运行"
-    }
+  "scene": {
+    "kind": "neon-graph",
+    "fallback": "/assets/presentation/scene-dark.svg",
+    "fallbackLight": "/assets/presentation/scene-light.svg"
   },
-  "meta": {
-    "content_version": "0.1.0",
-    "demo_source": "docs/demo-results.json"
+  "story": {
+    "intro": {
+      "title": {
+        "en": "A concrete task",
+        "zh": "从实际任务出发"
+      },
+      "body": {
+        "en": "A personal note collection is difficult to reuse if every session assembles it differently. Keep one ordered prefix and a source manifest so you can inspect what will be supplied to the model.",
+        "zh": "如果每次会话都以不同方式拼接笔记，个人资料就难以复用。保留有序前缀与来源清单，可以检查实际要提供给模型的内容。"
+      }
+    },
+    "sections": [
+      {
+        "title": {
+          "en": "Follow the operation",
+          "zh": "处理过程"
+        },
+        "body": {
+          "en": "ingest walks supported note files and hashes their content. prefix sorts sources by relative path and content hash, assembles stable framing, and records a manifest. session stores conversation turns; deepseek_client sends the full prefix and turns when chat is used.",
+          "zh": "ingest 遍历支持的笔记文件并计算内容哈希；prefix 按相对路径和哈希排序，以稳定边界拼接并记录清单。session 保存对话轮次；chat 时 deepseek_client 发送完整前缀与轮次。"
+        },
+        "image": {
+          "light": "/assets/presentation/process-light.svg",
+          "dark": "/assets/presentation/process-dark.svg",
+          "alt": {
+            "en": "Follow the operation",
+            "zh": "处理过程"
+          }
+        }
+      },
+      {
+        "title": {
+          "en": "How Memoir works",
+          "zh": "Memoir 的工作方式"
+        },
+        "body": {
+          "en": "ingest walks supported note files and hashes their content. prefix sorts sources by relative path and content hash, assembles stable framing, and records a manifest. session stores conversation turns; deepseek_client sends the full prefix and turns when chat is used.",
+          "zh": "ingest 遍历支持的笔记文件并计算内容哈希；prefix 按相对路径和哈希排序，以稳定边界拼接并记录清单。session 保存对话轮次；chat 时 deepseek_client 发送完整前缀与轮次。"
+        },
+        "image": {
+          "light": "/assets/presentation/architecture-light.svg",
+          "dark": "/assets/presentation/architecture-dark.svg",
+          "alt": {
+            "en": "How Memoir works",
+            "zh": "Memoir 的工作方式"
+          }
+        }
+      },
+      {
+        "title": {
+          "en": "Connect the pieces",
+          "zh": "输入与输出"
+        },
+        "body": {
+          "en": "The following routes are implemented in the source. Choose the input that matches your task and keep the resulting artifact with your project.",
+          "zh": "以下路径已有源码实现。按任务选择输入，并把生成的结果与项目一起保存。"
+        },
+        "image": {
+          "light": "/assets/presentation/integrations-light.svg",
+          "dark": "/assets/presentation/integrations-dark.svg",
+          "alt": {
+            "en": "Connect the pieces",
+            "zh": "输入与输出"
+          }
+        }
+      }
+    ],
+    "details": [
+      {
+        "title": {
+          "en": "Configuration",
+          "zh": "配置"
+        },
+        "body": {
+          "en": "MEMOIR_HOME selects prefix.txt, manifest.yaml and session.json storage. DEEPSEEK_API_KEY enables chat; DEEPSEEK_MODEL and DEEPSEEK_BASE_URL select the online model and endpoint. The cost command uses the repository pricing snapshot, which may differ from current provider billing.",
+          "zh": "MEMOIR_HOME 指定 prefix.txt、manifest.yaml 与 session.json 的存储位置。DEEPSEEK_API_KEY 用于 chat；DEEPSEEK_MODEL 与 DEEPSEEK_BASE_URL 指定模型和端点。cost 命令使用仓库内价格快照，可能与当前实际计费不同。"
+        }
+      },
+      {
+        "title": {
+          "en": "Further use",
+          "zh": "进一步使用"
+        },
+        "body": {
+          "en": "The CLI exposes the following operations. Commands after the example use your own paths or identifiers.",
+          "zh": "CLI 提供以下操作。示例之外的命令需要替换成你的文件路径或标识。"
+        },
+        "code": "memoir ingest examples/notes\nmemoir status\n# Online chat requires your configured endpoint and API key:\nmemoir chat"
+      }
+    ]
   }
 }

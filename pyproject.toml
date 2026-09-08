@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "memoir"
 version = "0.1.0"
-description = "Consumer AI that remembers your whole life — affordable on DeepSeek prefix-cache."
+description = "Assemble local Markdown and text notes into a deterministic full-context prefix for a DeepSeek-backed chat session."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.12"

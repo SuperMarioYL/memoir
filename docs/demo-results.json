@@ -1,34 +1,13 @@
 {
-  "implementation_version": "0.1.0",
-  "model": "deepseek-chat",
-  "demo_input": "examples/notes (4 notes: 2024-goals.md, decision-deepseek.md, reading-list.md, training.txt)",
-  "ingest_output": {
-    "source_count": 4,
-    "total_tokens": 346,
-    "prefix_hash": "7dfc31cffa444112",
-    "cache_stable": true,
-    "byte_identical_on_re_ingest": true
-  },
-  "actual_cost_for_demo_prefix": {
-    "prefix_tokens": 346,
-    "output_tokens": 300,
-    "deepseek_steady_state_per_turn": 0.000354,
-    "deepseek_first_turn_per_turn": 0.000423,
-    "openai_no_cache_per_turn": 0.003865,
-    "openai_with_caching_per_turn": 0.003433,
-    "ratio_openai_no_cache_vs_deepseek": 10.9
-  },
-  "worked_example_20k_token_lifelong_prefix": {
-    "label": "illustration using the published rates above; not a measured benchmark",
-    "prefix_tokens": 20000,
-    "output_tokens": 300,
-    "deepseek_cache_hit_per_turn": 0.00173,
-    "deepseek_cache_miss_per_turn": 0.00573,
-    "openai_no_cache_per_turn": 0.053,
-    "openai_with_caching_per_turn": 0.028
-  },
-  "limitations": [
-    "chat requires a real DEEPSEEK_API_KEY; ingest/cost/status run fully offline",
-    "token counts at ingest use tiktoken cl100k_base as an estimate; the API returns authoritative counts"
+  "schema": 1,
+  "source_revision": "b102e2285cd0c8e6aca6d948f117707c6f344e92",
+  "scope": "Assemble the shipped example notes twice in reversed input order and compare bytes. No chat call, provider cache hit, billing or memory recall is measured.",
+  "steps": [
+    {
+      "label": "Recorded run",
+      "body": "Assemble the shipped example notes twice in reversed input order and compare bytes. No chat call, provider cache hit, billing or memory recall is measured.",
+      "command": ".venv/bin/python examples/presentation-demo.py",
+      "output": "{\n  \"sources\": 4,\n  \"ordered_paths\": [\n    \"2024-goals.md\",\n    \"decision-deepseek.md\",\n    \"reading-list.md\",\n    \"training.txt\"\n  ],\n  \"prefix_hash\": \"7dfc31cffa444112\",\n  \"same_bytes_after_input_reversal\": true,\n  \"cache_stable\": true\n}"
+    }
   ]
 }

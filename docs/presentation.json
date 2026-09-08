@@ -1,0 +1,78 @@
+{
+  "name": "memoir",
+  "tagline": "Give your notes a stable place in every conversation.",
+  "architecture": {
+    "title": "How Memoir works",
+    "nodes": [
+      {
+        "title": "Note ingestion",
+        "detail": "memoir/ingest.py"
+      },
+      {
+        "title": "Stable prefix",
+        "detail": "memoir/prefix.py"
+      },
+      {
+        "title": "Session state",
+        "detail": "memoir/session.py"
+      },
+      {
+        "title": "Chat client",
+        "detail": "memoir/deepseek_client.py"
+      }
+    ],
+    "edges": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ]
+    ]
+  },
+  "process": {
+    "title": "From input to a useful result",
+    "steps": [
+      {
+        "title": "Read notes",
+        "detail": "Four bundled examples"
+      },
+      {
+        "title": "Sort and frame",
+        "detail": "Stable source ordering"
+      },
+      {
+        "title": "Compare bytes",
+        "detail": "Reversed input gives same prefix"
+      }
+    ],
+    "result": "The two assemblies produce identical prefix bytes and the same content hash."
+  },
+  "integrations": {
+    "title": "Supported input and output routes",
+    "items": [
+      {
+        "title": "Markdown / text",
+        "detail": "Local source notes"
+      },
+      {
+        "title": "Prefix + manifest",
+        "detail": "Deterministic assembled input"
+      },
+      {
+        "title": "DeepSeek HTTP",
+        "detail": "Configured online chat route"
+      },
+      {
+        "title": "Session JSON",
+        "detail": "Saved conversation turns"
+      }
+    ]
+  }
+}

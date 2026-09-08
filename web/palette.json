@@ -1,0 +1,38 @@
+{
+  "mode": "auto",
+  "id": "e6567a-e78d6a-f6acda-26c7df93223d",
+  "identity": "https://github.com/supermarioyl/memoir",
+  "primary": "#e6567a",
+  "secondary": "#e78d6a",
+  "highlight": "#f6acda",
+  "dark": {
+    "bg": "#0a070e",
+    "panel": "#131019",
+    "code": "#140d16",
+    "ink": "#fdeef8",
+    "muted": "#b29caf",
+    "line": "#3a1826",
+    "primary": "#e6567a",
+    "secondary": "#e78d6a",
+    "highlight": "#f6acda",
+    "accent": "#e6567a",
+    "buttonStart": "#c74b6a",
+    "buttonEnd": "#a7664d",
+    "buttonText": "#ffffff"
+  },
+  "light": {
+    "bg": "#fef9fa",
+    "panel": "#fef7f8",
+    "code": "#fdf3f6",
+    "ink": "#271621",
+    "muted": "#725e72",
+    "line": "#f7cbd6",
+    "primary": "#be4765",
+    "secondary": "#9f6149",
+    "highlight": "#8f647e",
+    "accent": "#be4765",
+    "buttonStart": "#c74b6a",
+    "buttonEnd": "#a7664d",
+    "buttonText": "#ffffff"
+  }
+}

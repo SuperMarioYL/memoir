@@ -1,7 +1,7 @@
 name: pages
 on:
   push:
-    branches: [main]
+    branches: ["main"]
     paths: ['web/**', '.github/workflows/pages.yml']
   workflow_dispatch:
 permissions:
@@ -13,6 +13,6 @@ concurrency:
   cancel-in-progress: false
 jobs:
   site:
-    uses: SuperMarioYL/web-factory/.github/workflows/build-site.yml@70fdbbde77828281378a75bb8445802743b7726a
+    uses: SuperMarioYL/web-factory/.github/workflows/build-site.yml@fbff4bd18225c8795d4d473ac1b92b785fbba1fc
     with:
-      factory_ref: 70fdbbde77828281378a75bb8445802743b7726a
+      factory_ref: fbff4bd18225c8795d4d473ac1b92b785fbba1fc
