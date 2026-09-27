@@ -1,10 +1,11 @@
-"""Memoir CLI — ingest, chat, cost, status.
+"""Memoir CLI — ingest, chat, fold, cost, status.
 
 Commands
 --------
 * ``memoir ingest <notes_dir>`` — build the cache-stable personal-history prefix.
 * ``memoir chat``               — talk to DeepSeek with your full context; each
   turn prints the DeepSeek cache-hit cost and the OpenAI equivalent.
+* ``memoir fold``               — fold the saved conversation into the prefix.
 * ``memoir cost``               — dollar comparison for your actual prefix.
 * ``memoir status``             — manifest + session summary.
 """
@@ -25,9 +26,24 @@ from .cost import (
     format_usd,
 )
 from .deepseek_client import DeepSeekError, chat as deepseek_chat
-from .ingest import ingest_folder
-from .prefix import assemble_prefix, load_manifest, load_prefix_text, write_prefix
-from .session import build_messages, load_session, reset_session, save_session
+from .ingest import SkippedFile, ingest_folder
+from .prefix import (
+    AssembledPrefix,
+    SourceStat,
+    assemble_prefix,
+    count_tokens,
+    hash_prefix_text,
+    load_manifest,
+    load_prefix_text,
+    write_prefix,
+)
+from .session import (
+    build_messages,
+    folded_block,
+    load_session,
+    reset_session,
+    save_session,
+)
 
 console = Console()
 
@@ -54,21 +70,31 @@ def cli() -> None:
 def ingest(notes_dir: str) -> None:
     """Build the cache-stable personal-history prefix from a notes folder."""
     config = load_config()
-    sources = ingest_folder(notes_dir)
-    if not sources:
+    result = ingest_folder(notes_dir)
+    if not result.sources:
         console.print(f"[yellow]No notes (.md/.txt) found in {notes_dir}.[/yellow]")
+        for s in result.skipped:
+            console.print(f"[yellow]skipped:[/yellow] {s.rel_path} — {s.reason}")
         raise SystemExit(1)
 
-    prefix = assemble_prefix(sources, model=config.model)
-    write_prefix(prefix, config.paths.home)
+    prefix = assemble_prefix(result.sources, model=config.model)
+    write_prefix(prefix, config.paths.home, skipped=result.skipped or None)
 
-    table = Table(title=f"Ingested {len(sources)} note(s)", show_header=True)
+    table = Table(title=f"Ingested {len(result.sources)} note(s)", show_header=True)
     table.add_column("Source", style="cyan", no_wrap=True)
     table.add_column("Kind", style="magenta")
     table.add_column("Tokens", justify="right")
     for s in prefix.sources:
         table.add_row(s.path, s.kind, str(s.token_count))
     console.print(table)
+
+    if result.skipped:
+        console.print(
+            f"[yellow]Warning:[/yellow] {len(result.skipped)} note file(s) could "
+            "not be read and are NOT in the prefix:"
+        )
+        for s in result.skipped:
+            console.print(f"  [yellow]- {s.rel_path}[/yellow] — {s.reason}")
 
     console.print(
         f"\n[green]Prefix assembled.[/green] "
@@ -138,6 +164,74 @@ def chat(reset: bool) -> None:
             prompt_tokens=result.prompt_tokens,
         )
         _print_turn_cost(result, deepseek_cost, openai_cost)
+
+
+@cli.command()
+def fold() -> None:
+    """Fold the saved conversation turns into the persistent prefix.
+
+    Appends the current session to prefix.txt under a deterministic framing
+    block (no timestamps, so re-assembly stays byte-stable), updates the
+    manifest's token count and hash, and clears the session. The prefix
+    changes, so the very next chat turn pays a one-time DeepSeek cache miss;
+    after that the folded prefix is cache-stable again.
+    """
+    config = load_config()
+    prefix_text = _require_prefix(config)
+    manifest = load_manifest(config.paths.home)
+    if manifest is None:
+        console.print(
+            "[red]No readable manifest.[/red] Run [cyan]memoir ingest <notes_dir>[/cyan] first."
+        )
+        raise SystemExit(1)
+
+    session = load_session(config)
+    if not session.turns:
+        console.print(
+            "[yellow]No conversation to fold.[/yellow] Chat first, then run fold."
+        )
+        return
+
+    block = folded_block(session.turns)
+    new_text = prefix_text + "\n" + block
+    sources = [
+        SourceStat(
+            path=str(s.get("path", "")),
+            kind=str(s.get("kind", "")),
+            token_count=int(s.get("token_count", 0)),
+            content_hash=str(s.get("content_hash", "")),
+            included=bool(s.get("included", True)),
+        )
+        for s in manifest.get("sources", [])
+    ]
+    skipped = [
+        SkippedFile(
+            rel_path=str(s.get("rel_path", "")), reason=str(s.get("reason", ""))
+        )
+        for s in manifest.get("skipped", [])
+    ]
+    new_prefix = AssembledPrefix(
+        text=new_text,
+        total_tokens=count_tokens(new_text),
+        sources=sources,
+        prefix_hash=hash_prefix_text(new_text),
+        cache_stable=True,
+        model=str(manifest.get("model", "")),
+    )
+    write_prefix(new_prefix, config.paths.home, skipped=skipped or None)
+    reset_session(config)
+
+    console.print(
+        f"\n[green]Conversation folded into the prefix.[/green] "
+        f"turns=[bold]{len(session.turns)}[/bold]  "
+        f"tokens=[bold]{int(manifest.get('total_tokens', 0)):,}[/bold] -> "
+        f"[bold]{new_prefix.total_tokens:,}[/bold]  "
+        f"hash=[bold]{new_prefix.prefix_hash}[/bold]"
+    )
+    console.print(
+        "[dim]The prefix changed, so the next chat turn pays a one-time DeepSeek "
+        "cache miss; the folded prefix is cache-stable again after that.[/dim]"
+    )
 
 
 def _print_turn_cost(result, deepseek_cost: float, openai_cost: float) -> None:

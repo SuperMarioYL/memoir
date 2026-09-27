@@ -1,5 +1,6 @@
-"""Tests for note ingestion (m1)."""
+"""Tests for note ingestion (m1) and skipped-file surfacing (m4)."""
 
+import os
 from pathlib import Path
 
 import pytest
@@ -17,10 +18,10 @@ def test_ingest_reads_md_and_txt(tmp_path):
     _write(tmp_path / "todo.txt", "buy milk")
     _write(tmp_path / "image.png", "not a note")  # ignored
 
-    sources = ingest_folder(tmp_path)
-    paths = sorted(s.rel_path for s in sources)
+    result = ingest_folder(tmp_path)
+    paths = sorted(s.rel_path for s in result.sources)
     assert paths == ["2024.md", "todo.txt"]
-    kinds = {s.rel_path: s.kind for s in sources}
+    kinds = {s.rel_path: s.kind for s in result.sources}
     assert kinds["2024.md"] == "markdown"
     assert kinds["todo.txt"] == "text"
 
@@ -31,8 +32,8 @@ def test_ingest_skips_hidden_files_and_dirs(tmp_path):
     _write(tmp_path / "sub" / "nested.md", "deep")
     _write(tmp_path / ".git" / "config.md", "git")
 
-    sources = ingest_folder(tmp_path)
-    paths = sorted(s.rel_path for s in sources)
+    result = ingest_folder(tmp_path)
+    paths = sorted(s.rel_path for s in result.sources)
     assert paths == ["real.md", "sub/nested.md"]
 
 
@@ -41,7 +42,7 @@ def test_ingest_is_deterministic_across_calls(tmp_path):
     _write(tmp_path / "b.md", "beta")
     first = ingest_folder(tmp_path)
     second = ingest_folder(tmp_path)
-    assert [s.content_hash for s in first] == [s.content_hash for s in second]
+    assert [s.content_hash for s in first.sources] == [s.content_hash for s in second.sources]
 
 
 def test_content_hash_is_stable():
@@ -61,3 +62,18 @@ def test_read_source_skips_non_note(tmp_path):
     _write(root / "data.json", "{}")
     assert read_source(root, root / "note.md") is not None
     assert read_source(root, root / "data.json") is None
+
+
+@pytest.mark.skipif(
+    not hasattr(os, "geteuid") or os.geteuid() == 0,
+    reason="unreadable-file setup needs a non-root user",
+)
+def test_ingest_records_unreadable_files_instead_of_dropping_them(tmp_path):
+    _write(tmp_path / "locked.md", "secret")
+    _write(tmp_path / "open.md", "readable")
+    (tmp_path / "locked.md").chmod(0o000)
+
+    result = ingest_folder(tmp_path)
+    assert [s.rel_path for s in result.sources] == ["open.md"]
+    assert [s.rel_path for s in result.skipped] == ["locked.md"]
+    assert result.skipped[0].reason  # carries the OS error text

@@ -96,6 +96,16 @@ memoir status
 memoir chat
 ```
 
+### 把对话并入记忆
+
+对话变长时 session.json 和每轮消息列表会不断增长。`memoir fold` 会把已保存的轮次以确定性文本块追加到 prefix.txt，更新清单（token 数与哈希），并清空会话：
+
+```bash
+memoir fold
+```
+
+每次 fold 前缀会变化一次，因此下一轮聊天会付出一次性的缓存未命中；之后折叠后的前缀重新字节稳定。相同的轮次永远折叠出相同的字节（文本块不含时间戳）。
+
 ## 配置
 
 MEMOIR_HOME 指定 prefix.txt、manifest.yaml 与 session.json 的存储位置。DEEPSEEK_API_KEY 用于 chat；DEEPSEEK_MODEL 与 DEEPSEEK_BASE_URL 指定模型和端点。cost 命令使用仓库内价格快照，可能与当前实际计费不同。

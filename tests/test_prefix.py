@@ -1,5 +1,9 @@
-"""Tests for prefix assembly — the cache-stability primitive (m1)."""
+"""Tests for prefix assembly — the cache-stability primitive (m1, m4)."""
 
+import yaml
+
+import memoir.prefix as prefix_module
+import pytest
 from memoir.ingest import Source, content_hash_of
 from memoir.prefix import (
     assemble_prefix,
@@ -72,3 +76,55 @@ def test_write_and_load_round_trip(tmp_path):
 def test_load_returns_none_when_absent(tmp_path):
     assert load_prefix_text(tmp_path) is None
     assert load_manifest(tmp_path) is None
+
+
+# ---- m4: hardening of on-disk state ----------------------------------------
+
+
+def test_load_manifest_returns_none_for_truncated_yaml(tmp_path):
+    (tmp_path / "manifest.yaml").write_text(
+        "total_tokens: 123\nsources: [", encoding="utf-8"
+    )
+    assert load_manifest(tmp_path) is None
+
+
+def test_load_manifest_returns_none_for_non_mapping(tmp_path):
+    (tmp_path / "manifest.yaml").write_text("- just\n- a list\n", encoding="utf-8")
+    assert load_manifest(tmp_path) is None
+
+
+def test_write_prefix_never_leaves_truncated_manifest(tmp_path, monkeypatch):
+    """A crash during the manifest write must keep both files individually intact."""
+    first = assemble_prefix([_src("a.md", "alpha")])
+    write_prefix(first, tmp_path)
+    old_manifest = (tmp_path / "manifest.yaml").read_text(encoding="utf-8")
+
+    second = assemble_prefix([_src("a.md", "alpha changed"), _src("b.md", "beta")])
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("simulated crash during manifest write")
+
+    monkeypatch.setattr(prefix_module.yaml, "safe_dump", boom)
+    with pytest.raises(RuntimeError):
+        write_prefix(second, tmp_path)
+
+    # prefix.txt is fully committed with the new content (complete file, never
+    # a torn write) and the manifest still holds its previous parseable state.
+    assert (tmp_path / "prefix.txt").read_text(encoding="utf-8") == second.text
+    assert (tmp_path / "manifest.yaml").read_text(encoding="utf-8") == old_manifest
+    assert yaml.safe_load((tmp_path / "manifest.yaml").read_text(encoding="utf-8"))
+
+
+def test_write_prefix_records_skipped_files_in_manifest(tmp_path):
+    from memoir.ingest import SkippedFile
+
+    p = assemble_prefix([_src("a.md", "alpha")])
+    write_prefix(p, tmp_path, skipped=[SkippedFile(rel_path="locked.md", reason="denied")])
+    m = load_manifest(tmp_path)
+    assert m is not None
+    assert m["skipped"] == [{"rel_path": "locked.md", "reason": "denied"}]
+
+    write_prefix(p, tmp_path)
+    m = load_manifest(tmp_path)
+    assert m is not None
+    assert "skipped" not in m

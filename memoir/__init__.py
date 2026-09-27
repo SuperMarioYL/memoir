@@ -5,4 +5,4 @@ DeepSeek API every turn. DeepSeek's prefix-cache discount makes whole-context
 recall affordable where re-sending the full history on US-priced models is not.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

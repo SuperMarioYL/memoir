@@ -11,7 +11,7 @@
   "meta": {
     "visual_style": "neon-particle",
     "demo_source": "docs/demo-results.json",
-    "content_version": "0.1.0"
+    "content_version": "0.2.0"
   },
   "hero": {
     "headline": {
@@ -218,10 +218,10 @@
           "zh": "进一步使用"
         },
         "body": {
-          "en": "The CLI exposes the following operations. Commands after the example use your own paths or identifiers.",
-          "zh": "CLI 提供以下操作。示例之外的命令需要替换成你的文件路径或标识。"
+          "en": "The CLI exposes the following operations. memoir fold appends the saved conversation to the prefix and clears the session; the next chat turn pays a one-time cache miss after a fold.",
+          "zh": "CLI 提供以下操作。memoir fold 会把已保存的对话并入前缀并清空会话；fold 后的下一轮聊天会付出一次性的缓存未命中。"
         },
-        "code": "memoir ingest examples/notes\nmemoir status\n# Online chat requires your configured endpoint and API key:\nmemoir chat"
+        "code": "memoir ingest examples/notes\nmemoir status\n# Online chat requires your configured endpoint and API key:\nmemoir chat\n# Fold the saved conversation into the persistent prefix:\nmemoir fold"
       }
     ]
   }

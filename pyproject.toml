@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "memoir"
-version = "0.1.0"
+version = "0.2.0"
 description = "Assemble local Markdown and text notes into a deterministic full-context prefix for a DeepSeek-backed chat session."
 readme = "README.md"
 license = { text = "MIT" }

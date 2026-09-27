@@ -44,6 +44,27 @@ class Source:
     content_hash: str
 
 
+@dataclass(frozen=True)
+class SkippedFile:
+    """A note file that could not be read, kept so ingest never drops one silently."""
+
+    rel_path: str
+    reason: str
+
+
+@dataclass(frozen=True)
+class IngestResult:
+    """Outcome of walking a notes folder.
+
+    ``sources`` are the notes that made it into the prefix; ``skipped`` records
+    every note-like file that could not be read (permissions, removed mid-walk,
+    I/O error) so the CLI and manifest can surface the gap instead of hiding it.
+    """
+
+    sources: list[Source]
+    skipped: list[SkippedFile]
+
+
 def content_hash_of(text: str) -> str:
     """Return the xxhash64 of ``text`` (hex string)."""
     return xxhash.xxh64(text.encode("utf-8")).hexdigest()
@@ -60,15 +81,13 @@ def read_source(root: Path, path: Path) -> Source | None:
 
     ``root`` is the ingested folder; ``path`` is the file within it. The
     relative path is computed from ``root`` so ordering is reproducible across
-    machines.
+    machines. Raises OSError if the file cannot be read — callers decide whether
+    a read failure means skip-and-record or abort.
     """
     suffix = path.suffix.lower()
     if suffix not in NOTE_EXTENSIONS:
         return None
-    try:
-        raw = path.read_bytes()
-    except OSError:
-        return None
+    raw = path.read_bytes()
     try:
         text = raw.decode("utf-8")
     except UnicodeDecodeError:
@@ -86,12 +105,15 @@ def read_source(root: Path, path: Path) -> Source | None:
     )
 
 
-def ingest_folder(notes_dir: str | os.PathLike) -> list[Source]:
-    """Walk ``notes_dir`` recursively and return every note Source.
+def ingest_folder(notes_dir: str | os.PathLike) -> IngestResult:
+    """Walk ``notes_dir`` recursively and collect every note Source.
 
-    Hidden files and ``SKIP_DIRS`` are skipped. The returned list is NOT sorted
-    here — :func:`memoir.prefix.assemble_prefix` owns the deterministic order so
-    the cache-stability property lives in one place.
+    Hidden files and ``SKIP_DIRS`` are skipped. Unreadable note files are
+    recorded in the result's ``skipped`` list (with the OS error) rather than
+    being silently dropped — the product promises to remember the whole life,
+    so a note that failed to read must be visible to the user. The returned
+    sources are NOT sorted here — :func:`memoir.prefix.assemble_prefix` owns the
+    deterministic order so the cache-stability property lives in one place.
     """
     root = Path(notes_dir).expanduser().resolve()
     if not root.exists():
@@ -100,6 +122,7 @@ def ingest_folder(notes_dir: str | os.PathLike) -> list[Source]:
         raise NotADirectoryError(f"not a directory: {root}")
 
     sources: list[Source] = []
+    skipped: list[SkippedFile] = []
     for dirpath, dirnames, filenames in os.walk(root):
         # prune in-place so os.walk does not descend into ignored dirs
         dirnames[:] = [
@@ -108,7 +131,16 @@ def ingest_folder(notes_dir: str | os.PathLike) -> list[Source]:
         for name in sorted(filenames):
             if name.startswith("."):
                 continue
-            src = read_source(root, Path(dirpath) / name)
+            path = Path(dirpath) / name
+            try:
+                rel = path.relative_to(root).as_posix()
+            except ValueError:
+                rel = path.name
+            try:
+                src = read_source(root, path)
+            except OSError as exc:
+                skipped.append(SkippedFile(rel_path=rel, reason=str(exc)))
+                continue
             if src is not None:
                 sources.append(src)
-    return sources
+    return IngestResult(sources=sources, skipped=skipped)

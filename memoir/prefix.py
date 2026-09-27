@@ -27,7 +27,7 @@ from typing import Callable
 
 import yaml
 
-from .ingest import Source
+from .ingest import SkippedFile, Source
 
 # Stable framing. These markers are part of the cache-stable prefix and must
 # never change between releases without bumping the manifest version.
@@ -110,6 +110,15 @@ class AssembledPrefix:
         }
 
 
+def hash_prefix_text(text: str) -> str:
+    """Return the xxhash64 of an assembled prefix text (hex string).
+
+    Single owner of the prefix-hash definition so assemble and fold cannot
+    drift apart.
+    """
+    return xxhash.xxh64(text.encode("utf-8")).hexdigest()
+
+
 def _sort_key(src: Source) -> tuple[str, str]:
     """Deterministic sort key: relative path, then content hash."""
     return (src.rel_path, src.content_hash)
@@ -149,7 +158,7 @@ def assemble_prefix(
         return _SOURCE_SEPARATOR.join(parts) + "\n", stats
 
     text, stats = _build(ordered)
-    prefix_hash = xxhash.xxh64(text.encode("utf-8")).hexdigest()
+    prefix_hash = hash_prefix_text(text)
 
     # verify determinism: re-sort and re-build, the text must match exactly
     again = sorted(sources, key=_sort_key)
@@ -166,14 +175,39 @@ def assemble_prefix(
     )
 
 
-def write_prefix(prefix: AssembledPrefix, home: Path) -> None:
-    """Persist ``prefix.txt`` and ``manifest.yaml`` under ``home``."""
+def _atomic_write(path: Path, text: str) -> None:
+    """Write ``text`` to ``path`` via a temp file + os.replace.
+
+    os.replace is atomic within a filesystem, so a crash can never leave a
+    half-written file behind — the old content or the new content, never a
+    truncated mix.
+    """
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(text, encoding="utf-8")
+    os.replace(tmp, path)
+
+
+def write_prefix(
+    prefix: AssembledPrefix, home: Path, skipped: list[SkippedFile] | None = None
+) -> None:
+    """Persist ``prefix.txt`` and ``manifest.yaml`` under ``home``.
+
+    Both files are written atomically (temp file + os.replace), so a crash can
+    never leave a truncated file behind — the worst case is a complete file of
+    either the old or the new content. prefix.txt is written first and the
+    manifest last: if the process dies between the two replaces, the stale
+    manifest is still parseable (never a YAML crash) and the user repairs state
+    by re-running ingest. When ``skipped`` is non-empty the manifest records the
+    files ingest could not read.
+    """
     home.mkdir(parents=True, exist_ok=True)
-    (home / "prefix.txt").write_text(prefix.text, encoding="utf-8")
+    _atomic_write(home / "prefix.txt", prefix.text)
     manifest = prefix.to_manifest()
-    (home / "manifest.yaml").write_text(
+    if skipped:
+        manifest["skipped"] = [s.__dict__ for s in skipped]
+    _atomic_write(
+        home / "manifest.yaml",
         yaml.safe_dump(manifest, sort_keys=False, allow_unicode=True),
-        encoding="utf-8",
     )
 
 
@@ -186,8 +220,19 @@ def load_prefix_text(home: str | os.PathLike) -> str | None:
 
 
 def load_manifest(home: str | os.PathLike) -> dict | None:
-    """Return the parsed manifest, or None if not yet ingested."""
+    """Return the parsed manifest, or None if missing/unreadable/corrupt.
+
+    A truncated or hand-edited manifest must behave like a missing one — the
+    CLI prints its friendly re-run-ingest message instead of crashing on the
+    raw YAML error or on a non-mapping document.
+    """
     p = Path(home) / "manifest.yaml"
     if not p.exists():
         return None
-    return yaml.safe_load(p.read_text(encoding="utf-8"))
+    try:
+        manifest = yaml.safe_load(p.read_text(encoding="utf-8"))
+    except yaml.YAMLError:
+        return None
+    if not isinstance(manifest, dict):
+        return None
+    return manifest

@@ -47,8 +47,20 @@ def load_session(config: Config) -> Session:
     try:
         data = json.loads(p.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
+        # A corrupt session behaves like a missing one: start fresh rather
+        # than crash the REPL.
         return Session()
-    turns = [Turn(role=t["role"], content=t["content"]) for t in data.get("turns", [])]
+    if not isinstance(data, dict):
+        return Session()
+    turns: list[Turn] = []
+    for t in data.get("turns", []):
+        if (
+            isinstance(t, dict)
+            and isinstance(t.get("role"), str)
+            and isinstance(t.get("content"), str)
+            and t["role"] in ("user", "assistant")
+        ):
+            turns.append(Turn(role=t["role"], content=t["content"]))
     return Session(turns=turns)
 
 
@@ -85,3 +97,17 @@ def build_messages(prefix_text: str, session: Session, new_user: str | None) -> 
     if new_user is not None:
         messages.append({"role": "user", "content": new_user})
     return messages
+
+
+def folded_block(turns: list[Turn]) -> str:
+    """Render conversation turns as a deterministic block for the prefix.
+
+    Used by ``memoir fold``. No timestamps: the same turns always render to the
+    same bytes, so the folded prefix keeps the cache-stability property (the
+    prefix changes once per fold, then is stable again).
+    """
+    parts = ["## Folded conversation"]
+    for t in turns:
+        label = "user" if t.role == "user" else "assistant"
+        parts.append(f"### {label}\n{t.content}")
+    return "\n\n".join(parts) + "\n"

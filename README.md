@@ -96,6 +96,16 @@ memoir status
 memoir chat
 ```
 
+### Folding a conversation into memory
+
+Long conversations grow session.json and the per-turn message list. `memoir fold` appends the saved turns to prefix.txt under a deterministic block, updates the manifest (token count and hash), and clears the session:
+
+```bash
+memoir fold
+```
+
+The prefix changes once per fold, so the next chat turn pays a one-time cache miss; the folded prefix is byte-stable again after that. Folding the same turns always produces the same bytes (no timestamps in the block).
+
 ## Configuration
 
 MEMOIR_HOME selects prefix.txt, manifest.yaml and session.json storage. DEEPSEEK_API_KEY enables chat; DEEPSEEK_MODEL and DEEPSEEK_BASE_URL select the online model and endpoint. The cost command uses the repository pricing snapshot, which may differ from current provider billing.
