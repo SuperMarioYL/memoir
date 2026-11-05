@@ -52,6 +52,16 @@ class SkippedFile:
     reason: str
 
 
+class NoteEncodingError(ValueError):
+    """A note file whose bytes are not UTF-8 text.
+
+    Raised instead of decoding with ``errors="replace"``: a note written in a
+    legacy encoding (GBK, Big5, cp1252) would otherwise be remembered as U+FFFD
+    mojibake while ingest reports success, which is worse than telling the user
+    which note needs re-saving.
+    """
+
+
 @dataclass(frozen=True)
 class IngestResult:
     """Outcome of walking a notes folder.
@@ -81,17 +91,22 @@ def read_source(root: Path, path: Path) -> Source | None:
 
     ``root`` is the ingested folder; ``path`` is the file within it. The
     relative path is computed from ``root`` so ordering is reproducible across
-    machines. Raises OSError if the file cannot be read — callers decide whether
-    a read failure means skip-and-record or abort.
+    machines. Raises OSError if the file cannot be read, or
+    :class:`NoteEncodingError` if its bytes are not UTF-8 — callers decide
+    whether a read failure means skip-and-record or abort.
     """
     suffix = path.suffix.lower()
     if suffix not in NOTE_EXTENSIONS:
         return None
     raw = path.read_bytes()
     try:
-        text = raw.decode("utf-8")
-    except UnicodeDecodeError:
-        text = raw.decode("utf-8", errors="replace")
+        # utf-8-sig also strips the BOM that Windows editors prepend to UTF-8.
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError as exc:
+        raise NoteEncodingError(
+            f"not UTF-8 text ({exc.reason} at byte {exc.start}); "
+            "re-save the note as UTF-8"
+        ) from exc
     try:
         rel = path.relative_to(root).as_posix()
     except ValueError:
@@ -108,12 +123,14 @@ def read_source(root: Path, path: Path) -> Source | None:
 def ingest_folder(notes_dir: str | os.PathLike) -> IngestResult:
     """Walk ``notes_dir`` recursively and collect every note Source.
 
-    Hidden files and ``SKIP_DIRS`` are skipped. Unreadable note files are
-    recorded in the result's ``skipped`` list (with the OS error) rather than
-    being silently dropped — the product promises to remember the whole life,
-    so a note that failed to read must be visible to the user. The returned
-    sources are NOT sorted here — :func:`memoir.prefix.assemble_prefix` owns the
-    deterministic order so the cache-stability property lives in one place.
+    Hidden files and ``SKIP_DIRS`` are skipped. Unreadable note files and notes
+    that are not UTF-8 text are recorded in the result's ``skipped`` list (with
+    the OS or encoding error) rather than being silently dropped or silently
+    rewritten as replacement characters — the product promises to remember the
+    whole life, so a note that failed to read must be visible to the user. The
+    returned sources are NOT sorted here — :func:`memoir.prefix.assemble_prefix`
+    owns the deterministic order so the cache-stability property lives in one
+    place.
     """
     root = Path(notes_dir).expanduser().resolve()
     if not root.exists():
@@ -138,7 +155,7 @@ def ingest_folder(notes_dir: str | os.PathLike) -> IngestResult:
                 rel = path.name
             try:
                 src = read_source(root, path)
-            except OSError as exc:
+            except (OSError, NoteEncodingError) as exc:
                 skipped.append(SkippedFile(rel_path=rel, reason=str(exc)))
                 continue
             if src is not None:

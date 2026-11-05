@@ -6,6 +6,7 @@ import memoir.prefix as prefix_module
 import pytest
 from memoir.ingest import Source, content_hash_of
 from memoir.prefix import (
+    append_folded_section,
     assemble_prefix,
     load_manifest,
     load_prefix_text,
@@ -91,6 +92,47 @@ def test_load_manifest_returns_none_for_truncated_yaml(tmp_path):
 def test_load_manifest_returns_none_for_non_mapping(tmp_path):
     (tmp_path / "manifest.yaml").write_text("- just\n- a list\n", encoding="utf-8")
     assert load_manifest(tmp_path) is None
+
+
+def test_load_manifest_returns_none_for_unusable_total_tokens(tmp_path):
+    (tmp_path / "manifest.yaml").write_text(
+        "total_tokens: null\nsources: []\n", encoding="utf-8"
+    )
+    assert load_manifest(tmp_path) is None
+
+
+def test_load_manifest_returns_none_for_non_list_sources(tmp_path):
+    (tmp_path / "manifest.yaml").write_text(
+        "total_tokens: 10\nsources: oops\n", encoding="utf-8"
+    )
+    assert load_manifest(tmp_path) is None
+
+
+def test_load_manifest_normalises_total_tokens(tmp_path):
+    (tmp_path / "manifest.yaml").write_text(
+        'total_tokens: "10"\nsources: []\n', encoding="utf-8"
+    )
+    manifest = load_manifest(tmp_path)
+    assert manifest is not None
+    assert manifest["total_tokens"] == 10
+
+
+# ---- v0.3.0: folded fragment re-applied by assembly ------------------------
+
+
+def test_assemble_appends_folded_fragment_after_notes():
+    sources = [_src("a.md", "alpha")]
+    folded = "## Folded conversation\n\n### user\nremember this"
+    plain = assemble_prefix(sources)
+    with_folded = assemble_prefix(sources, folded=folded)
+
+    assert with_folded.text == append_folded_section(plain.text, folded)
+    assert with_folded.text.startswith(plain.text.rstrip("\n"))
+    assert with_folded.text.endswith("remember this\n")
+    assert with_folded.prefix_hash != plain.prefix_hash
+    assert with_folded.total_tokens >= plain.total_tokens
+    # folded turns are not notes: the source list is unchanged
+    assert [s.path for s in with_folded.sources] == ["a.md"]
 
 
 def test_write_prefix_never_leaves_truncated_manifest(tmp_path, monkeypatch):

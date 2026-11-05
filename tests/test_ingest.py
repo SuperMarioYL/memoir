@@ -64,6 +64,30 @@ def test_read_source_skips_non_note(tmp_path):
     assert read_source(root, root / "data.json") is None
 
 
+# ---- v0.3.0: note decoding ------------------------------------------------
+
+
+def test_read_source_strips_utf8_bom(tmp_path):
+    (tmp_path / "bom.md").write_bytes("\ufeff# title\nbody\n".encode("utf-8"))
+    src = read_source(tmp_path, tmp_path / "bom.md")
+    assert src is not None
+    assert src.content.startswith("# title")
+    assert "\ufeff" not in src.content
+
+
+def test_ingest_reports_non_utf8_notes_instead_of_mangling_them(tmp_path):
+    # A GB18030 note used to be decoded with errors="replace", so the Chinese
+    # text became U+FFFD in the prefix while ingest reported success.
+    (tmp_path / "gbk.md").write_bytes("我的中文笔记".encode("gb18030"))
+    _write(tmp_path / "ok.md", "# fine\n")
+
+    result = ingest_folder(tmp_path)
+    assert [s.rel_path for s in result.sources] == ["ok.md"]
+    assert [s.rel_path for s in result.skipped] == ["gbk.md"]
+    assert "UTF-8" in result.skipped[0].reason
+    assert all("\ufffd" not in s.content for s in result.sources)
+
+
 @pytest.mark.skipif(
     not hasattr(os, "geteuid") or os.geteuid() == 0,
     reason="unreadable-file setup needs a non-root user",

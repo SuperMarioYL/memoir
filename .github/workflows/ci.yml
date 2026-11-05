@@ -31,3 +31,5 @@ jobs:
           memoir ingest examples/notes
           memoir status
           memoir cost
+      - name: Run the documented demo
+        run: python examples/presentation-demo.py

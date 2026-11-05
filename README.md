@@ -92,6 +92,8 @@ The CLI exposes the following operations. Commands after the example use your ow
 ```bash
 memoir ingest examples/notes
 memoir status
+# Dollar comparison for your actual prefix (OpenAI vs DeepSeek prefix-cache):
+memoir cost
 # Online chat requires your configured endpoint and API key:
 memoir chat
 ```
@@ -105,6 +107,8 @@ memoir fold
 ```
 
 The prefix changes once per fold, so the next chat turn pays a one-time cache miss; the folded prefix is byte-stable again after that. Folding the same turns always produces the same bytes (no timestamps in the block).
+
+Folded turns are also kept in `folded.md` next to prefix.txt, so re-running `memoir ingest` to pick up new notes rebuilds the notes half of the prefix without discarding the conversation half.
 
 ## Configuration
 
@@ -132,6 +136,7 @@ The following routes are implemented in the source. Choose the input that matche
 
 - Stable bytes do not guarantee a provider cache hit or a particular cost. The demo makes no API call.
 - Online chat sends the full ingested note content to the configured endpoint. Review the source folder before using chat.
+- Notes must be UTF-8 text. A note saved in another encoding is listed as skipped, with the reason, instead of being added as garbled text.
 - Token counts are estimates and full-prefix chat remains bounded by the selected model context window.
 
 Provider cache behavior, large-note context limits and recall quality need separate live evaluation. No measured savings or unlimited recall is claimed here.

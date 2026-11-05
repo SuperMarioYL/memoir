@@ -1,7 +1,9 @@
 """Tests for cost comparison (m3)."""
 
 import pytest
+from click.testing import CliRunner
 
+from memoir.cli import cli
 from memoir.config import Config, Paths
 from memoir.cost import (
     actual_turn_cost,
@@ -77,3 +79,11 @@ def test_format_usd_scales_precision():
     assert format_usd(0.001234).startswith("$0.0012")
     assert format_usd(0.5) == "$0.500"
     assert format_usd(12.0) == "$12.00"
+
+
+def test_cost_rejects_negative_output_tokens(tmp_path, monkeypatch):
+    """A negative assumption used to print negative dollars for every provider."""
+    monkeypatch.setenv("MEMOIR_HOME", str(tmp_path))
+    result = CliRunner().invoke(cli, ["cost", "--output-tokens", "-500"])
+    assert result.exit_code == 2
+    assert "output-tokens" in result.output

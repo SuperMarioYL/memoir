@@ -37,6 +37,10 @@ _SOURCE_SEPARATOR = "\n\n"
 
 _MANIFEST_VERSION = 1
 
+# Folded conversation lives in its own fragment next to prefix.txt so that
+# re-running ingest cannot discard memory the user already folded.
+_FOLDED_NAME = "folded.md"
+
 
 def _get_tokenizer() -> Callable[[str], int]:
     """Return a token-counting callable.
@@ -124,8 +128,22 @@ def _sort_key(src: Source) -> tuple[str, str]:
     return (src.rel_path, src.content_hash)
 
 
+def append_folded_section(base: str, section: str) -> str:
+    """Join a folded-conversation section onto existing prefix/fragment text.
+
+    Single owner of the folded framing. ``memoir fold`` uses it to extend both
+    prefix.txt and folded.md, and ingest uses it to re-apply folded.md on top of
+    the freshly assembled notes prefix, so re-ingesting after a fold reproduces
+    the exact bytes — and therefore the exact prefix hash — the fold printed.
+    """
+    section = section.strip("\n")
+    if not base.strip():
+        return section + "\n"
+    return base.rstrip("\n") + "\n\n" + section + "\n"
+
+
 def assemble_prefix(
-    sources: list[Source], *, model: str = ""
+    sources: list[Source], *, model: str = "", folded: str = ""
 ) -> AssembledPrefix:
     """Assemble ``sources`` into a cache-stable prefix.
 
@@ -135,6 +153,11 @@ def assemble_prefix(
     the sort is deterministic so this is always True; the check exists so a
     future non-deterministic code path fails loudly instead of silently breaking
     the cache discount.
+
+    ``folded`` is the durable folded-conversation fragment (see
+    :func:`load_folded`). It is appended after the note sources, so the folded
+    turns survive a re-ingest instead of being dropped when the notes are
+    re-assembled.
     """
     ordered = sorted(sources, key=_sort_key)
 
@@ -155,7 +178,10 @@ def assemble_prefix(
             parts.append(
                 f"{_SOURCE_HEADER_FMT.format(rel_path=src.rel_path)}\n{src.content}"
             )
-        return _SOURCE_SEPARATOR.join(parts) + "\n", stats
+        text = _SOURCE_SEPARATOR.join(parts) + "\n"
+        if folded:
+            text = append_folded_section(text, folded)
+        return text, stats
 
     text, stats = _build(ordered)
     prefix_hash = hash_prefix_text(text)
@@ -219,12 +245,60 @@ def load_prefix_text(home: str | os.PathLike) -> str | None:
     return p.read_text(encoding="utf-8")
 
 
+def load_folded(home: str | os.PathLike) -> str:
+    """Return the durable folded-conversation fragment, or "" when there is none.
+
+    ``memoir fold`` appends every folded session here; ingest re-applies the
+    whole fragment on top of the notes prefix. Keeping it out of prefix.txt
+    means a re-ingest rebuilds the notes half without losing the conversation
+    half.
+    """
+    p = Path(home) / _FOLDED_NAME
+    if not p.exists():
+        return ""
+    return p.read_text(encoding="utf-8")
+
+
+def write_folded(home: str | os.PathLike, text: str) -> None:
+    """Persist the folded-conversation fragment atomically."""
+    home = Path(home)
+    home.mkdir(parents=True, exist_ok=True)
+    _atomic_write(home / _FOLDED_NAME, text)
+
+
+def _normalise_manifest(manifest: dict) -> dict | None:
+    """Return ``manifest`` with the fields commands read validated, or None.
+
+    Valid YAML is not the same thing as a usable manifest: a hand-edited file can
+    keep every key and still carry ``total_tokens: null`` or ``sources: oops``.
+    Treating that as corrupt keeps the promise that a bad manifest behaves like a
+    missing one instead of crashing ``status``/``cost``/``fold``.
+    """
+    total = manifest.get("total_tokens", 0)
+    if isinstance(total, bool):
+        return None
+    try:
+        total = int(total)
+    except (TypeError, ValueError):
+        return None
+    if total < 0:
+        return None
+    for key in ("sources", "skipped"):
+        entries = manifest.get(key, [])
+        if not isinstance(entries, list) or not all(
+            isinstance(entry, dict) for entry in entries
+        ):
+            return None
+    return {**manifest, "total_tokens": total}
+
+
 def load_manifest(home: str | os.PathLike) -> dict | None:
     """Return the parsed manifest, or None if missing/unreadable/corrupt.
 
-    A truncated or hand-edited manifest must behave like a missing one — the
-    CLI prints its friendly re-run-ingest message instead of crashing on the
-    raw YAML error or on a non-mapping document.
+    A truncated, hand-edited or wrongly shaped manifest must behave like a
+    missing one — the CLI prints its friendly re-run-ingest message instead of
+    crashing on the raw YAML error, on a non-mapping document, or on a field
+    whose value is not usable.
     """
     p = Path(home) / "manifest.yaml"
     if not p.exists():
@@ -235,4 +309,4 @@ def load_manifest(home: str | os.PathLike) -> dict | None:
         return None
     if not isinstance(manifest, dict):
         return None
-    return manifest
+    return _normalise_manifest(manifest)

@@ -30,11 +30,14 @@ from .ingest import SkippedFile, ingest_folder
 from .prefix import (
     AssembledPrefix,
     SourceStat,
+    append_folded_section,
     assemble_prefix,
     count_tokens,
     hash_prefix_text,
+    load_folded,
     load_manifest,
     load_prefix_text,
+    write_folded,
     write_prefix,
 )
 from .session import (
@@ -77,7 +80,9 @@ def ingest(notes_dir: str) -> None:
             console.print(f"[yellow]skipped:[/yellow] {s.rel_path} — {s.reason}")
         raise SystemExit(1)
 
-    prefix = assemble_prefix(result.sources, model=config.model)
+    prefix = assemble_prefix(
+        result.sources, model=config.model, folded=load_folded(config.paths.home)
+    )
     write_prefix(prefix, config.paths.home, skipped=result.skipped or None)
 
     table = Table(title=f"Ingested {len(result.sources)} note(s)", show_header=True)
@@ -172,9 +177,11 @@ def fold() -> None:
 
     Appends the current session to prefix.txt under a deterministic framing
     block (no timestamps, so re-assembly stays byte-stable), updates the
-    manifest's token count and hash, and clears the session. The prefix
-    changes, so the very next chat turn pays a one-time DeepSeek cache miss;
-    after that the folded prefix is cache-stable again.
+    manifest's token count and hash, and clears the session. The same text is
+    kept in folded.md, so the next ingest rebuilds the notes half of the prefix
+    without discarding what was folded. The prefix changes, so the very next
+    chat turn pays a one-time DeepSeek cache miss; after that the folded prefix
+    is cache-stable again.
     """
     config = load_config()
     prefix_text = _require_prefix(config)
@@ -193,12 +200,18 @@ def fold() -> None:
         return
 
     block = folded_block(session.turns)
-    new_text = prefix_text + "\n" + block
+    # Durable fragment first: if the process dies before prefix.txt is rewritten,
+    # the next ingest re-applies the fragment and the turns are not lost.
+    write_folded(
+        config.paths.home,
+        append_folded_section(load_folded(config.paths.home), block),
+    )
+    new_text = append_folded_section(prefix_text, block)
     sources = [
         SourceStat(
             path=str(s.get("path", "")),
             kind=str(s.get("kind", "")),
-            token_count=int(s.get("token_count", 0)),
+            token_count=int(s.get("token_count") or 0),
             content_hash=str(s.get("content_hash", "")),
             included=bool(s.get("included", True)),
         )
@@ -230,7 +243,8 @@ def fold() -> None:
     )
     console.print(
         "[dim]The prefix changed, so the next chat turn pays a one-time DeepSeek "
-        "cache miss; the folded prefix is cache-stable again after that.[/dim]"
+        "cache miss; the folded prefix is cache-stable again after that. Folded "
+        "turns are kept in folded.md and re-applied by the next ingest.[/dim]"
     )
 
 
@@ -253,7 +267,7 @@ def _print_turn_cost(result, deepseek_cost: float, openai_cost: float) -> None:
 @cli.command()
 @click.option(
     "--output-tokens",
-    type=int,
+    type=click.IntRange(min=0),
     default=None,
     help="Assumed output tokens per turn for the estimate.",
 )
@@ -273,7 +287,7 @@ def cost(output_tokens: int | None) -> None:
         )
         raise SystemExit(1)
 
-    prefix_tokens = int(manifest.get("total_tokens", 0))
+    prefix_tokens = manifest.get("total_tokens", 0)
     cb = estimate_per_turn(config, prefix_tokens, output_tokens)
 
     table = Table(

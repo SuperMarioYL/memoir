@@ -1,4 +1,7 @@
-"""Tests for session storage hardening (m4) and conversation folding (m5)."""
+"""Tests for session storage hardening (m4), conversation folding (m5) and fold
+durability across a re-ingest (v0.3.0)."""
+
+import shutil
 
 import yaml
 from pathlib import Path
@@ -8,6 +11,8 @@ from click.testing import CliRunner
 from memoir.cli import cli
 from memoir.config import Config, Paths
 from memoir.session import Session, folded_block, load_session, save_session, Turn
+
+NOTES = Path(__file__).resolve().parent.parent / "examples" / "notes"
 
 
 def _config(tmp_path: Path) -> Config:
@@ -124,16 +129,56 @@ def test_fold_command_without_session_is_noop(tmp_path, monkeypatch):
 def test_fold_is_deterministic_for_same_turns(tmp_path, monkeypatch):
     pairs = [("user", "q"), ("assistant", "a")]
 
-    hashes = []
-    for _ in range(2):
-        # Re-ingest so each fold starts from the same base prefix; otherwise
-        # the second fold would extend the first fold's output.
-        _ingest_examples(tmp_path, monkeypatch)
-        _save_turns(tmp_path, pairs)
-        monkeypatch.setenv("MEMOIR_HOME", str(tmp_path))
+    outputs = []
+    for i in range(2):
+        home = tmp_path / f"home{i}"
+        home.mkdir()
+        _ingest_examples(home, monkeypatch)
+        _save_turns(home, pairs)
+        monkeypatch.setenv("MEMOIR_HOME", str(home))
         result = CliRunner().invoke(cli, ["fold"])
         assert result.exit_code == 0, result.output
-        hashes.append((tmp_path / "prefix.txt").read_bytes())
+        outputs.append((home / "prefix.txt").read_bytes())
 
-    # Two folds of identical turns must produce byte-identical prefixes.
-    assert hashes[0] == hashes[1]
+    # Two independent folds of identical turns must produce identical bytes.
+    assert outputs[0] == outputs[1]
+
+
+# ---- fold durability across a re-ingest (v0.3.0) ---------------------------
+
+
+def _manifest(home: Path) -> dict:
+    return yaml.safe_load((home / "manifest.yaml").read_text(encoding="utf-8"))
+
+
+def test_fold_survives_reingest(tmp_path, monkeypatch):
+    """Re-ingesting notes must not discard folded conversation.
+
+    Until v0.3.0 the folded block lived only in prefix.txt and every ingest
+    rebuilt that file from the notes folder, so the documented "add a note, then
+    ingest again" flow erased the conversation without a warning.
+    """
+    notes = tmp_path / "notes"
+    shutil.copytree(NOTES, notes)
+    home = tmp_path / "home"
+    monkeypatch.setenv("MEMOIR_HOME", str(home))
+    runner = CliRunner()
+
+    assert runner.invoke(cli, ["ingest", str(notes)]).exit_code == 0
+    _save_turns(home, [("user", "Where did I travel?"), ("assistant", "Lisbon, in May.")])
+    assert runner.invoke(cli, ["fold"]).exit_code == 0
+
+    folded_hash = _manifest(home)["prefix_hash"]
+    assert "Lisbon, in May." in (home / "prefix.txt").read_text(encoding="utf-8")
+    assert (home / "folded.md").exists()
+
+    # Re-ingesting the unchanged notes reproduces exactly what fold produced.
+    assert runner.invoke(cli, ["ingest", str(notes)]).exit_code == 0
+    assert _manifest(home)["prefix_hash"] == folded_hash
+
+    # Adding a note and re-ingesting keeps the folded turns and adds the note.
+    (notes / "extra.md").write_text("# Extra\nremember this too\n", encoding="utf-8")
+    assert runner.invoke(cli, ["ingest", str(notes)]).exit_code == 0
+    prefix = (home / "prefix.txt").read_text(encoding="utf-8")
+    assert "Lisbon, in May." in prefix
+    assert "remember this too" in prefix

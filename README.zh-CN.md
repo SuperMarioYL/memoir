@@ -92,6 +92,8 @@ CLI 提供以下操作。示例之外的命令需要替换成你的文件路径�
 ```bash
 memoir ingest examples/notes
 memoir status
+# 按实际前缀比较费用（OpenAI 对比 DeepSeek 前缀缓存）：
+memoir cost
 # Online chat requires your configured endpoint and API key:
 memoir chat
 ```
@@ -105,6 +107,8 @@ memoir fold
 ```
 
 每次 fold 前缀会变化一次，因此下一轮聊天会付出一次性的缓存未命中；之后折叠后的前缀重新字节稳定。相同的轮次永远折叠出相同的字节（文本块不含时间戳）。
+
+折叠的轮次同时保存在 prefix.txt 旁的 `folded.md` 中，因此新增笔记后重新运行 `memoir ingest` 只会重建前缀的笔记部分，不会丢弃已折叠的对话。
 
 ## 配置
 
@@ -132,6 +136,7 @@ MEMOIR_HOME 指定 prefix.txt、manifest.yaml 与 session.json 的存储位置�
 
 - 字节稳定不保证提供方缓存命中或具体费用；示例不调用 API。
 - 在线 chat 会把已导入的完整笔记内容发送给配置端点，使用前应检查来源目录。
+- 笔记必须是 UTF-8 文本；其他编码的笔记会被列为跳过并给出原因，而不会以乱码写入前缀。
 - token 数是估计值，完整前缀聊天仍受所选模型上下文窗口限制。
 
 提供方缓存行为、大笔记上下文限制和回忆质量需要单独在线评估；这里不宣称实测节省或无限记忆。
